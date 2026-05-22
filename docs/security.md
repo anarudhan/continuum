@@ -1,311 +1,303 @@
 # Continuum Security Model
 
+> **Design Principle:** Security must be invisible to users. Zero friction. Zero interruptions. Zero "security theater" that gets in the way of agents doing their job.
+
+## Philosophy
+
+Continuum's security model follows three rules:
+
+1. **Secure by default** — Everything is locked down out of the box
+2. **Zero friction** — Security never blocks legitimate agent workflows
+3. **Transparent** — Users can see what's protected and how, but don't need to manage it
+
+---
+
 ## Threat Model
 
 ### Assets
-1. **Memory Data** — User's project knowledge, decisions, credentials mentioned in context
+1. **Memory Data** — User's project knowledge, decisions, code context
 2. **API Keys** — Agent authentication tokens
 3. **Cost Data** — Spending information, budget settings
-4. **System State** — Running configuration, agent identities
 
 ### Threat Actors
-1. **External attacker** — Unauthorized access to memory data
-2. **Malicious agent** — Agent that writes poisoned/false memories
-3. **Compromised agent** — Legitimate agent whose API key is stolen
-4. **Insider** — User with dashboard access who shouldn't see all data
-5. **Network attacker** — Man-in-the-middle on WebSocket/HTTP
+| Actor | Risk | Our Approach |
+|-------|------|-------------|
+| External attacker | Steal memory data | Network isolation + API keys |
+| Compromised agent | Use stolen key | Rate limits + audit logs |
+| Network attacker | MITM | TLS 1.3 everywhere |
 
 ---
 
-## Security Architecture
+## Security Architecture: Invisible Defense
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Perimeter                                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   WAF/Ratel │  │   mTLS      │  │   API Key + JWT         │  │
-│  │   Limiting  │  │   (opt)     │  │   Authentication        │  │
-│  └──────┬──────┘  └──────┬──────┘  └───────────┬─────────────┘  │
-│         └─────────────────┴─────────────────────┘                │
-│                              │                                   │
-├──────────────────────────────┼───────────────────────────────────┤
-│                         API Layer                                │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   Input     │  │   Output    │  │   CORS + CSRF           │  │
-│  │   Validation│  │   Encoding  │  │   Protection            │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-│                              │                                   │
-├──────────────────────────────┼───────────────────────────────────┤
-│                      Data Layer                                  │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   SQL       │  │   XSS       │  │   Audit Logging         │  │
-│  │   Injection │  │   Sanitiz.  │  │   (immutable)           │  │
-│  │   Prevention│  │             │  │                         │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-│                              │                                   │
-├──────────────────────────────┼───────────────────────────────────┤
-│                    Storage Layer                                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   Encrypted │  │   Network   │  │   Backup                │  │
-│  │   Volumes   │  │   Isolation │  │   Encryption            │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      Agent Layer                             │
+│  Hermes ──► Claude Code ──► Codex ──► OpenClaw             │
+│     │           │            │           │                  │
+│     └───────────┴────────────┴───────────┘                  │
+│                      │                                       │
+│         ┌────────────▼────────────┐                         │
+│         │   Continuum API (Go)    │  ← Security is HERE    │
+│         │  REST + WebSocket + MCP │    (invisible to user)  │
+│         └────────────┬────────────┘                         │
+│                      │                                       │
+│  ┌───────────────────┼───────────────────┐                 │
+│  ▼                   ▼                   ▼                 │
+│ ┌────────┐     ┌──────────┐     ┌──────────┐              │
+│ │Episodic│     │ Semantic │     │Procedural│              │
+│ │Memory  │     │ Memory   │     │ Memory   │              │
+│ └────────┘     └──────────┘     └──────────┘              │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+**Key insight:** Agents connect the same way they always have. Security happens *inside* Continuum, not at the agent boundary.
 
 ---
 
-## Security Controls (Implemented)
+## What Users DON'T Have to Do
 
-### Authentication & Authorization
-
-| Control | Implementation | Status |
-|---------|---------------|--------|
-| API Key per agent | UUID v4, 256-bit entropy | P0 |
-| Key rotation | 90-day TTL with grace period | P1 |
-| Scope restriction | Read-only vs read-write keys | P2 |
-| Admin dashboard auth | Separate JWT with 2FA option | P2 |
-| mTLS for MCP | Optional client certificates | P2 |
-
-### Input Validation
-
-| Control | Implementation | Status |
-|---------|---------------|--------|
-| Schema validation | JSON Schema for all endpoints | P0 |
-| Size limits | 10MB max memory content | P0 |
-| Rate limiting | Per-agent, per-IP, global | P0 |
-| Content sanitization | Strip HTML/JS from memory content | P0 |
-| SQL injection prevention | Parameterized queries (pgx) | P0 |
-| NoSQL injection prevention | Redis command validation | P0 |
-
-### Output Protection
-
-| Control | Implementation | Status |
-|---------|---------------|--------|
-| XSS prevention | Content-Security-Policy headers | P0 |
-| Output encoding | HTML escape in dashboard | P0 |
-| JSON serialization | Strict struct marshaling | P0 |
-| Error sanitization | No stack traces to clients | P0 |
-
-### Network Security
-
-| Control | Implementation | Status |
-|---------|---------------|--------|
-| TLS 1.3 | All external communication | P0 |
-| HSTS headers | Enforce HTTPS | P0 |
-| CORS policy | Strict origin whitelist | P0 |
-| WebSocket origin validation | Reject cross-origin WS | P0 |
-| Request timeout | 30s max for all endpoints | P0 |
-
-### Data Protection
-
-| Control | Implementation | Status |
-|---------|---------------|--------|
-| Encryption at rest | PostgreSQL TDE + volume encryption | P1 |
-| Encryption in transit | TLS 1.3 for all connections | P0 |
-| Memory content encryption | AES-256-GCM for sensitive memories | P2 |
-| Backup encryption | GPG-encrypted backups | P2 |
-| Secure deletion | Overwrite before volume release | P2 |
-
-### Audit & Monitoring
-
-| Control | Implementation | Status |
-|---------|---------------|--------|
-| Immutable audit log | Append-only, tamper-evident | P0 |
-| Failed auth logging | Track brute force attempts | P0 |
-| Anomaly detection | Unusual memory access patterns | P2 |
-| Admin alerts | Security events to Discord/webhook | P1 |
+| Security Task | Traditional Approach | Continuum Approach |
+|--------------|---------------------|-------------------|
+| Manage certificates | Manual TLS setup | Auto-generated, auto-renewed |
+| Rotate API keys | Calendar reminders | Automatic, seamless |
+| Configure firewalls | iptables rules | Docker network isolation |
+| Audit access | Manual log review | Automated, alerts only on anomalies |
+| Backup encryption | GPG keys management | Encrypted by default, no user action |
+| Rate limiting | nginx config | Built-in, auto-tuned |
 
 ---
 
-## Agent Isolation Model
+## Security Controls (Zero-Config)
 
-### Memory Visibility
+### 1. Authentication: One API Key, Zero Hassle
 
-```
-┌─────────────────────────────────────────┐
-│           Memory Access Matrix           │
-├─────────────┬──────────┬────────────────┤
-│   Memory    │  Owner   │  Other Agents  │
-├─────────────┼──────────┼────────────────┤
-│ Private     │   Full   │   None         │
-│ Shared      │   Full   │   Read         │
-│ Broadcast   │   Full   │   Read+Write   │
-└─────────────┴──────────┴────────────────┘
+```bash
+# User does this ONCE during setup
+docker compose up -d
+# API key is auto-generated and printed to logs
+# Agents use it via env var — same as any other service
 ```
 
-### Trust Levels
+```bash
+# In agent config (same pattern as OpenAI, Anthropic, etc.)
+export CONTINUUM_API_KEY="ctm_auto_generated_secure_key"
+```
 
-| Level | Description | Capabilities |
-|-------|-------------|--------------|
-| **Untrusted** | New/unverified agent | Read shared, write private only |
-| **Trusted** | Verified agent (manual approval) | Read shared, write shared |
-| **Admin** | Dashboard user / owner | Full access, config changes |
+**What we handle:**
+- Key generation with 256-bit entropy
+- Secure storage (hashed, never plaintext in DB)
+- Automatic rotation (old key works during grace period)
+- Revocation (instant, no restart needed)
+
+**What users DON'T do:**
+- Generate keys manually
+- Store keys in password managers
+- Remember rotation schedules
+- Distribute keys to agents
+
+### 2. Network: TLS Without the Pain
+
+```yaml
+# docker-compose.yml — TLS is automatic
+services:
+  continuum:
+    environment:
+      # Auto-generates self-signed cert on first run
+      # Or provide your own:
+      - CONTINUUM_TLS_CERT=/certs/cert.pem
+      - CONTINUUM_TLS_KEY=/certs/key.pem
+```
+
+**Default behavior:**
+- Localhost: HTTP (no TLS needed for local dev)
+- Network exposure: Auto-TLS via Let's Encrypt
+- Custom certs: Drop files in `/certs`, done
+
+### 3. Memory Isolation: Automatic
+
+```go
+// This happens automatically — agents don't change behavior
+// Agent A writes:
+continuum.memory_write(
+    type="semantic",
+    content="OAuth2 + PKCE decision",
+    visibility="shared"  // ← optional, defaults to shared
+)
+
+// Agent B reads:
+continuum.memory_search(query="OAuth2")
+// ← Only sees shared memories, private ones invisible
+```
+
+**Rules (enforced automatically):**
+- Private memories: Only visible to writing agent
+- Shared memories: Visible to all agents (default)
+- No configuration needed — agents use same API
+
+### 4. Rate Limiting: Invisible Protection
+
+```
+Agent: "I want to write 10,000 memories"
+Continuum: "Sure, but I'll smooth that out so the DB doesn't choke"
+
+Agent: "I want to search every millisecond"
+Continuum: "I'll cache that for you, no need to hammer the DB"
+```
+
+**Defaults:**
+- 1,000 requests/minute per agent (generous for normal use)
+- Burst allowance for batch operations
+- WebSocket: 10 messages/second (plenty for real-time sync)
+
+**What users see:** Nothing. Rate limits are high enough that legitimate workflows never hit them.
+
+### 5. Content Safety: Sanitize Without Stripping
+
+```python
+# Agent writes this (legitimate code snippet):
+memory = """
+<script src="/auth.js"></script>
+function login() { ... }
+"""
+
+# Continuum stores it safely:
+# - HTML tags preserved in raw storage
+# - Dashboard displays as code block (not rendered)
+# - Search indexes the text content
+```
+
+**What we DON'T do:**
+- ❌ Reject memories with `<script>` tags (legitimate code has these)
+- ❌ Strip HTML from content (breaks code snippets)
+- ❌ Block "dangerous" words (false positives)
+
+**What we DO:**
+- ✅ Dashboard renders all content as plain text / code blocks
+- ✅ CSP headers prevent execution even if something slips through
+- ✅ Output encoding ensures browser treats it as text
 
 ---
 
-## Attack Scenarios & Mitigations
+## Attack Scenarios: How We Handle Them
 
 ### Scenario 1: Stolen API Key
 
-**Attack:** Attacker obtains agent's API key and reads all memories.
+**What happens:**
+1. Attacker uses key from compromised agent
+2. Rate limiting kicks in (unusual pattern detected)
+3. Audit log records everything
+4. Admin gets alert (Discord/webhook)
+5. Admin revokes key via dashboard (one click)
+6. New key auto-generated, agents reconnect seamlessly
 
-**Mitigations:**
-- Keys are scoped (read-only vs read-write)
-- Rate limiting detects abnormal usage
-- Audit log tracks all access
-- Key rotation forces re-authentication
-- IP allowlisting (optional)
+**User impact:** Zero. Legitimate agents keep working.
 
-### Scenario 2: Poisoned Memory Injection
+### Scenario 2: Malicious Agent Writes Nonsense
 
-**Attack:** Malicious agent writes false memories to mislead other agents.
+**What happens:**
+1. Agent writes false memory: "We decided to use HTTP not HTTPS"
+2. Memory stored with agent attribution (always visible)
+3. Other agents see: "[Claude] suggested HTTP not HTTPS" 
+4. Human reviews, flags as incorrect
+5. Reputation score adjusts, future memories from this agent flagged for review
 
-**Mitigations:**
-- Memory attribution (always tagged with agent ID)
-- Confidence scoring (low confidence for new/untrusted agents)
-- Conflict detection (flag contradictions)
-- Manual review queue for high-impact memories
-- Agent reputation system (track accuracy over time)
+**User impact:** Memories are labeled by source. Users decide what to trust.
 
-### Scenario 3: Memory Content XSS
+### Scenario 3: Network Attacker (MITM)
 
-**Attack:** Agent writes memory containing `<script>alert('xss')</script>`.
+**What happens:**
+1. Attacker intercepts local network traffic
+2. TLS 1.3 prevents decryption
+3. Certificate pinning (optional) detects tampering
 
-**Mitigations:**
-- Content sanitization on write (strip HTML/JS)
-- CSP headers prevent inline script execution
-- Output encoding in dashboard (HTML escape)
-- Memory content treated as plain text, never rendered as HTML
+**User impact:** Zero. Encryption is automatic.
 
-### Scenario 4: SQL Injection via Search
+### Scenario 4: DoS via Memory Bomb
 
-**Attack:** Agent sends `q='; DROP TABLE memories; --` in search.
+**What happens:**
+1. Agent tries to write 10,000 × 10MB memories
+2. Per-agent quota prevents storage exhaustion
+3. Compression reduces bloat automatically
+4. Admin gets alert
 
-**Mitigations:**
-- All queries use pgx parameterized statements
-- Full-text search uses PostgreSQL `to_tsquery` with escaping
-- No raw SQL concatenation anywhere
-- Read-only search endpoint (separate from write)
-
-### Scenario 5: DoS via Memory Bomb
-
-**Attack:** Agent writes 10,000 x 10MB memories to exhaust storage.
-
-**Mitigations:**
-- Per-agent memory quota (configurable)
-- Rate limiting on writes
-- Size limits per memory (10MB max)
-- Total storage alerts
-- Automatic compression reduces bloat
-
-### Scenario 6: WebSocket Hijacking
-
-**Attack:** Attacker opens WebSocket with stolen API key to eavesdrop.
-
-**Mitigations:**
-- WebSocket origin validation (same-origin policy)
-- API key required in connection handshake
-- Per-connection rate limiting
-- Heartbeat/ping to detect stale connections
-- Connection limit per agent
-
-### Scenario 7: Privilege Escalation
-
-**Attack:** Agent exploits bug to access other agents' private memories.
-
-**Mitigations:**
-- Row-level security in PostgreSQL
-- Every query includes `agent_id = ?` filter
-- Service layer enforces access control, not just API layer
-- Unit tests for authorization boundaries
-
-### Scenario 8: Supply Chain Attack
-
-**Attack:** Compromised dependency introduces backdoor.
-
-**Mitigations:**
-- Go modules with checksum verification
-- Minimal dependencies (only essential packages)
-- Docker image scanning (Trivy/Snyk)
-- No `latest` tags in Dockerfiles
-- SBOM generation for compliance
+**User impact:** Zero for legitimate users. Attacking agent is throttled, others unaffected.
 
 ---
 
-## Security Checklist (Pre-Release)
-
-### Code Level
-- [ ] No hardcoded secrets (use env vars)
-- [ ] All inputs validated (schema + size + type)
-- [ ] All outputs encoded (no raw HTML/JS)
-- [ ] SQL injection tests pass
-- [ ] XSS tests pass
-- [ ] CSRF protection enabled
-- [ ] Rate limiting configured
-- [ ] Error messages don't leak internals
-
-### Infrastructure
-- [ ] TLS 1.3 enforced
-- [ ] HSTS headers set
-- [ ] Security headers (CSP, X-Frame-Options, etc.)
-- [ ] Docker non-root user
-- [ ] Read-only filesystem where possible
-- [ ] No unnecessary ports exposed
-- [ ] Secrets in Docker secrets/env, not images
-
-### Data
-- [ ] Encryption at rest enabled
-- [ ] Backup encryption enabled
-- [ ] Audit log immutable
-- [ ] Data retention policy documented
-- [ ] Secure deletion implemented
-
-### Operations
-- [ ] Security event alerting
-- [ ] Incident response plan
-- [ ] Dependency vulnerability scanning
-- [ ] Penetration testing (before v1.0)
-- [ ] Security documentation published
-
----
-
-## Secure Configuration Defaults
+## Security Configuration (Optional Overrides)
 
 ```yaml
-# continuum.yaml — Secure defaults
+# continuum.yaml — Everything below is OPTIONAL
+# Defaults are secure, only override if you need to
+
 security:
+  # Only change if you have specific compliance needs
   api_keys:
-    min_entropy: 256
-    rotation_days: 90
-    max_per_agent: 3
+    rotation_days: 90        # default: 90
+    max_per_agent: 3         # default: 3
   
+  # Only change if you have unusual workloads
   rate_limiting:
-    requests_per_minute: 1000
-    burst_size: 100
-    websocket_messages_per_second: 10
+    requests_per_minute: 1000  # default: 1000
+    burst_size: 100            # default: 100
   
+  # Only change if you need stricter isolation
   memory:
-    max_content_size: 10MB
-    max_per_agent: 10000
-    sanitize_content: true
-    encrypt_sensitive: true
+    default_visibility: shared   # default: shared
+    max_content_size: 10MB       # default: 10MB
   
+  # Only change if you have custom TLS certs
   network:
-    tls_min_version: "1.3"
-    hsts_max_age: 31536000
-    cors_origins: []  # Empty = same-origin only
-    websocket_origins: []
+    tls_auto: true           # default: auto (Let's Encrypt)
+    # tls_cert: /path/to/cert.pem
+    # tls_key: /path/to/key.pem
   
+  # Only change if you need compliance logging
   audit:
-    enabled: true
-    retention_days: 365
-    immutable: true
-  
-  dashboard:
-    auth_required: true
-    session_timeout: 3600
-    mfa_optional: true
+    enabled: true            # default: true
+    retention_days: 365      # default: 365
 ```
+
+**Default rule:** If you don't specify it, it's secure.
+
+---
+
+## What Makes Continuum Different
+
+| Aspect | Traditional Security | Continuum Security |
+|--------|---------------------|-------------------|
+| Setup time | Hours of configuration | Zero — works out of the box |
+| Maintenance | Regular rotation, updates | Automatic, seamless |
+| User friction | MFA prompts, CAPTCHAs | Invisible to agents |
+| Flexibility | Rigid policies | Adaptive, learns normal patterns |
+| Visibility | Security dashboards everywhere | Only alerts when needed |
+
+---
+
+## Security Checklist (For Us, Not Users)
+
+Users don't see this. This is our internal quality bar:
+
+- [ ] Agent can connect with zero config beyond API key
+- [ ] Agent never sees a security error during normal use
+- [ ] Agent never needs to retry due to rate limits (under normal load)
+- [ ] Memory write succeeds on first attempt (no validation rejections for legitimate content)
+- [ ] Dashboard shows security status but doesn't require action
+- [ ] Alerts only fire for actual anomalies, not normal patterns
+- [ ] Key rotation happens without agent restart
+- [ ] TLS works without user providing certificates
+
+---
+
+## Incident Response (Automated)
+
+| Severity | Trigger | Response | User Notification |
+|----------|---------|----------|-----------------|
+| **Critical** | Mass data exfiltration | Auto-block IP, revoke keys | Immediate Discord alert |
+| **High** | Brute force detected | Rate limit, flag agent | Dashboard notification |
+| **Medium** | Unusual access pattern | Log for review | Weekly digest only |
+| **Low** | Single failed auth | Log silently | None |
 
 ---
 
