@@ -1,0 +1,117 @@
+package handlers
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/ezerops/continuum/internal/models"
+)
+
+// SessionHandler handles session-related requests
+type SessionHandler struct {
+	sessionStore *models.SessionStore
+}
+
+// NewSessionHandler creates a new session handler
+func NewSessionHandler(sessionStore *models.SessionStore) *SessionHandler {
+	return &SessionHandler{sessionStore: sessionStore}
+}
+
+// CreateSessionRequest represents a session creation request
+type CreateSessionRequest struct {
+	Project string `json:"project,omitempty"`
+	Task    string `json:"task,omitempty"`
+}
+
+// Create creates a new session
+func (h *SessionHandler) Create(c *gin.Context) {
+	agentID := c.MustGet("agent_id").(uuid.UUID)
+
+	var req CreateSessionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request", "message": err.Error()})
+		return
+	}
+
+	session, err := h.sessionStore.Create(c.Request.Context(), agentID, req.Project, req.Task)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "create_failed", "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, session)
+}
+
+// Get retrieves a session by ID
+func (h *SessionHandler) Get(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_id", "message": "Invalid session ID"})
+		return
+	}
+
+	session, err := h.sessionStore.GetByID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "fetch_failed", "message": err.Error()})
+		return
+	}
+
+	if session == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not_found", "message": "Session not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, session)
+}
+
+// List lists sessions for the current agent
+func (h *SessionHandler) List(c *gin.Context) {
+	agentID := c.MustGet("agent_id").(uuid.UUID)
+
+	limit := 50
+	if l := c.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 100 {
+			limit = parsed
+		}
+	}
+
+	sessions, err := h.sessionStore.ListByAgent(c.Request.Context(), agentID, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "list_failed", "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"sessions": sessions,
+		"count":    len(sessions),
+	})
+}
+
+// EndSessionRequest represents a session end request
+type EndSessionRequest struct {
+	Summary string `json:"summary,omitempty"`
+}
+
+// End marks a session as completed
+func (h *SessionHandler) End(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_id", "message": "Invalid session ID"})
+		return
+	}
+
+	var req EndSessionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request", "message": err.Error()})
+		return
+	}
+
+	if err := h.sessionStore.EndSession(c.Request.Context(), id, req.Summary); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "end_failed", "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Session ended"})
+}
