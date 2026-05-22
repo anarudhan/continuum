@@ -1,0 +1,77 @@
+version: "3.8"
+
+services:
+  continuum:
+    build:
+      context: .
+      dockerfile: deployments/docker/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - CONTINUUM_DATABASE_URL=postgres://continuum:continuum@postgres:5432/continuum?sslmode=disable
+      - CONTINUUM_REDIS_URL=redis://redis:6379
+      - CONTINUUM_LOG_LEVEL=info
+      - CONTINUUM_API_KEY=${CONTINUUM_API_KEY:-change-me-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - continuum-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      - POSTGRES_USER=continuum
+      - POSTGRES_PASSWORD=continuum
+      - POSTGRES_DB=continuum
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./internal/models/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U continuum -d continuum"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Embedding worker for background processing
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: deployments/docker/Dockerfile.worker
+  #   environment:
+  #     - CONTINUUM_DATABASE_URL=postgres://continuum:continuum@postgres:5432/continuum?sslmode=disable
+  #     - CONTINUUM_REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   restart: unless-stopped
+
+volumes:
+  continuum-data:
+  postgres-data:
+  redis-data:

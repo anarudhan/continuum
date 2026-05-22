@@ -1,0 +1,11 @@
+{
+  "name": "continuum-memory",
+  "display_name": "Continuum Memory",
+  "description": "Cross-agent memory mesh for persistent context across AI agents",
+  "version": "1.0.0",
+  "author": "ezerops",
+  "license": "MIT",
+  "repository": "https://github.com/ezerops/continuum",
+  "tags": ["memory", "agents", "context", "continuum"],
+  "skills": ["continuum-memory"]
+}

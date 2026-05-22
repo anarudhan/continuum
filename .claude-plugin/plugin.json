@@ -1,0 +1,19 @@
+{
+  "name": "continuum-memory",
+  "description": "Cross-agent memory mesh for persistent context across AI agents. Store episodic, semantic, and procedural memory. Search and retrieve context from any connected agent.",
+  "version": "1.0.0",
+  "author": {
+    "name": "ezerops"
+  },
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "agents",
+    "context",
+    "continuum",
+    "cross-agent"
+  ],
+  "skills": [
+    "./skills/continuum-memory"
+  ]
+}
