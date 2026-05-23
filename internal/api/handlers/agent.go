@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/anarudhan/continuum/internal/api/middleware"
 	"github.com/anarudhan/continuum/internal/models"
 )
 
@@ -38,7 +39,7 @@ func (h *AgentHandler) Create(c *gin.Context) {
 
 	agent, apiKey, err := h.agentStore.Create(c.Request.Context(), req.Name)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "create_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "create_failed", err)
 		return
 	}
 
@@ -52,7 +53,7 @@ func (h *AgentHandler) Create(c *gin.Context) {
 func (h *AgentHandler) List(c *gin.Context) {
 	agents, err := h.agentStore.List(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "list_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "list_failed", err)
 		return
 	}
 

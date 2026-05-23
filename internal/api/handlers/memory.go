@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/anarudhan/continuum/internal/api/middleware"
 	"github.com/anarudhan/continuum/internal/models"
 )
 
@@ -66,7 +67,7 @@ func (h *MemoryHandler) Create(c *gin.Context) {
 	}
 
 	if err := h.memoryStore.Create(c.Request.Context(), memory); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "create_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "create_failed", err)
 		return
 	}
 
@@ -85,7 +86,7 @@ func (h *MemoryHandler) Get(c *gin.Context) {
 
 	memory, err := h.memoryStore.GetByID(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "fetch_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "fetch_failed", err)
 		return
 	}
 
@@ -123,7 +124,7 @@ func (h *MemoryHandler) Search(c *gin.Context) {
 
 	memories, err := h.memoryStore.Search(c.Request.Context(), agentID, query, mType, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "search_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "search_failed", err)
 		return
 	}
 
@@ -152,7 +153,7 @@ func (h *MemoryHandler) List(c *gin.Context) {
 
 	memories, err := h.memoryStore.ListByAgent(c.Request.Context(), agentID, mType, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "list_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "list_failed", err)
 		return
 	}
 
@@ -173,7 +174,7 @@ func (h *MemoryHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.memoryStore.Delete(c.Request.Context(), id, agentID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "delete_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "delete_failed", err)
 		return
 	}
 

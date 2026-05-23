@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/anarudhan/continuum/internal/api/middleware"
 	"github.com/anarudhan/continuum/internal/models"
 )
 
@@ -37,7 +38,7 @@ func (h *SessionHandler) Create(c *gin.Context) {
 
 	session, err := h.sessionStore.Create(c.Request.Context(), agentID, req.Project, req.Task)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "create_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "create_failed", err)
 		return
 	}
 
@@ -56,7 +57,7 @@ func (h *SessionHandler) Get(c *gin.Context) {
 
 	session, err := h.sessionStore.GetByID(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "fetch_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "fetch_failed", err)
 		return
 	}
 
@@ -87,7 +88,7 @@ func (h *SessionHandler) List(c *gin.Context) {
 
 	sessions, err := h.sessionStore.ListByAgent(c.Request.Context(), agentID, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "list_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "list_failed", err)
 		return
 	}
 
@@ -115,7 +116,7 @@ func (h *SessionHandler) End(c *gin.Context) {
 	// Verify ownership before ending
 	session, err := h.sessionStore.GetByID(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "fetch_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "fetch_failed", err)
 		return
 	}
 
@@ -131,7 +132,7 @@ func (h *SessionHandler) End(c *gin.Context) {
 	}
 
 	if err := h.sessionStore.EndSession(c.Request.Context(), id, req.Summary); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "end_failed", "message": err.Error()})
+		middleware.HandleError(c, http.StatusInternalServerError, "end_failed", err)
 		return
 	}
 
