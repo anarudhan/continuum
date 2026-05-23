@@ -21,7 +21,7 @@ import (
 
 func main() {
 	// Load configuration
-	databaseURL := getEnv("CONTINUUM_DATABASE_URL", "postgres://continuum:continuum@localhost:5432/continuum?sslmode=disable")
+	databaseURL := getEnv("CONTINUUM_DATABASE_URL", "postgres://continuum:***@localhost:5432/continuum?sslmode=disable")
 	redisURL := getEnv("CONTINUUM_REDIS_URL", "redis://localhost:6379")
 	port := getEnv("CONTINUUM_PORT", "8080")
 
@@ -55,7 +55,7 @@ func main() {
 	ensureDefaultAgent(context.Background(), agentStore)
 
 	// Initialize handlers
-	memoryHandler := handlers.NewMemoryHandler(memoryStore)
+	memoryHandler := handlers.NewMemoryHandler(memoryStore, sessionStore)
 	sessionHandler := handlers.NewSessionHandler(sessionStore)
 	agentHandler := handlers.NewAgentHandler(agentStore)
 	healthHandler := handlers.NewHealthHandler(db, redisClient)
@@ -70,10 +70,9 @@ func main() {
 	router.Use(gin.Recovery())
 	router.Use(middleware.SecurityHeaders())
 
-	// WebSocket endpoint
+	// WebSocket server
 	wsServer := ws.NewServer()
 	go wsServer.Run()
-	router.GET("/ws", wsServer.HandleConnection)
 
 	// Health endpoints (no auth required)
 	router.GET("/health", healthHandler.Health)
@@ -85,12 +84,16 @@ func main() {
 	v1.Use(authMiddleware.RequireAPIKey())
 	v1.Use(rateLimiter.Limit())
 	{
+		// WebSocket upgrade endpoint (auth required)
+		v1.GET("/ws", wsServer.HandleConnection)
+
 		// Memories
 		v1.POST("/memories", memoryHandler.Create)
 		v1.GET("/memories", memoryHandler.List)
 		v1.GET("/memories/search", memoryHandler.Search)
 		v1.GET("/memories/:id", memoryHandler.Get)
 		v1.DELETE("/memories/:id", memoryHandler.Delete)
+		v1.GET("/memories/session/:session_id", memoryHandler.ListBySession)
 
 		// Sessions
 		v1.POST("/sessions", sessionHandler.Create)

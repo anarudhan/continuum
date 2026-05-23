@@ -15,12 +15,16 @@ import (
 
 // MemoryHandler handles memory-related requests
 type MemoryHandler struct {
-	memoryStore *models.MemoryStore
+	memoryStore  *models.MemoryStore
+	sessionStore *models.SessionStore
 }
 
 // NewMemoryHandler creates a new memory handler
-func NewMemoryHandler(memoryStore *models.MemoryStore) *MemoryHandler {
-	return &MemoryHandler{memoryStore: memoryStore}
+func NewMemoryHandler(memoryStore *models.MemoryStore, sessionStore *models.SessionStore) *MemoryHandler {
+	return &MemoryHandler{
+		memoryStore:  memoryStore,
+		sessionStore: sessionStore,
+	}
 }
 
 // CreateMemoryRequest represents a memory creation request
@@ -179,6 +183,45 @@ func (h *MemoryHandler) Delete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Memory deleted"})
+}
+
+// ListBySession lists memories for a specific session
+func (h *MemoryHandler) ListBySession(c *gin.Context) {
+	agentID := c.MustGet("agent_id").(uuid.UUID)
+
+	sessionID, err := uuid.Parse(c.Param("session_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_id", "message": "Invalid session ID"})
+		return
+	}
+
+	// Verify the session belongs to the agent
+	session, err := h.sessionStore.GetByID(c.Request.Context(), sessionID)
+	if err != nil {
+		middleware.HandleError(c, http.StatusInternalServerError, "fetch_failed", err)
+		return
+	}
+
+	if session == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not_found", "message": "Session not found"})
+		return
+	}
+
+	if session.AgentID != agentID {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not_found", "message": "Session not found"})
+		return
+	}
+
+	memories, err := h.memoryStore.ListBySession(c.Request.Context(), sessionID)
+	if err != nil {
+		middleware.HandleError(c, http.StatusInternalServerError, "list_failed", err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"memories": memories,
+		"count":    len(memories),
+	})
 }
 
 // sanitizeMemoryContent validates and sanitizes memory content

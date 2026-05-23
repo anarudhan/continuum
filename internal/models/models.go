@@ -16,6 +16,8 @@ type Agent struct {
 	Scopes       []string   `db:"scopes" json:"scopes"`
 	IsActive     bool       `db:"is_active" json:"is_active"`
 	LastSeenAt   *time.Time `db:"last_seen_at" json:"last_seen_at,omitempty"`
+	TokensUsed   int        `db:"tokens_used" json:"tokens_used"`
+	CostUSD      float64    `db:"cost_usd" json:"cost_usd"`
 	CreatedAt    time.Time  `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time  `db:"updated_at" json:"updated_at"`
 }
