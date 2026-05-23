@@ -50,6 +50,7 @@ func main() {
 	agentStore := models.NewAgentStore(store)
 	memoryStore := models.NewMemoryStore(store)
 	sessionStore := models.NewSessionStore(store)
+	costStore := models.NewCostStore(store)
 
 	// Create default agent if none exists
 	ensureDefaultAgent(context.Background(), agentStore)
@@ -58,6 +59,7 @@ func main() {
 	memoryHandler := handlers.NewMemoryHandler(memoryStore, sessionStore)
 	sessionHandler := handlers.NewSessionHandler(sessionStore)
 	agentHandler := handlers.NewAgentHandler(agentStore)
+	costHandler := handlers.NewCostHandler(costStore)
 	healthHandler := handlers.NewHealthHandler(db, redisClient)
 
 	// Initialize middleware
@@ -100,6 +102,10 @@ func main() {
 		v1.GET("/sessions", sessionHandler.List)
 		v1.GET("/sessions/:id", sessionHandler.Get)
 		v1.POST("/sessions/:id/end", sessionHandler.End)
+
+		// Cost tracking
+		v1.GET("/costs", costHandler.GetCosts)
+		v1.GET("/costs/breakdown", costHandler.GetCostBreakdown)
 
 		// Agents (admin-only for full listing)
 		v1.GET("/agents", authMiddleware.RequireAdmin(), agentHandler.List)

@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -82,10 +83,10 @@ func (s *CostStore) GetCostBreakdown(ctx context.Context, agentID uuid.UUID, day
 	rows, err := s.store.DB.Query(ctx, `
 		SELECT provider, model, SUM(tokens_input) as tokens_in, SUM(tokens_output) as tokens_out, SUM(cost_usd) as cost
 		FROM cost_logs
-		WHERE agent_id = $1 AND created_at >= CURRENT_DATE - INTERVAL '$2 days'
+		WHERE agent_id = $1 AND created_at >= CURRENT_DATE - ($2 || ' days')::INTERVAL
 		GROUP BY provider, model
 		ORDER BY cost DESC
-	`, agentID, days)
+	`, agentID, strconv.Itoa(days))
 	if err != nil {
 		return nil, fmt.Errorf("get cost breakdown: %w", err)
 	}
