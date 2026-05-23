@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: continuum-postgres
     environment:
       POSTGRES_USER: continuum
@@ -12,7 +12,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./internal/models/migrations:/docker-entrypoint-initdb.d
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U continuum -d continuum"]
       interval: 5s

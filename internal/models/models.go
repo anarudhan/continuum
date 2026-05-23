@@ -27,7 +27,7 @@ type Session struct {
 	Project    string     `db:"project" json:"project,omitempty"`
 	Task       string     `db:"task" json:"task,omitempty"`
 	Status     string     `db:"status" json:"status"`
-	Summary    string     `db:"summary" json:"summary,omitempty"`
+	Summary    *string    `db:"summary" json:"summary,omitempty"`
 	StartedAt  time.Time  `db:"started_at" json:"started_at"`
 	EndedAt    *time.Time `db:"ended_at" json:"ended_at,omitempty"`
 	TokenCount int        `db:"token_count" json:"token_count"`

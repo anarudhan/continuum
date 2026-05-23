@@ -16,6 +16,7 @@ import (
 	"github.com/anarudhan/continuum/internal/api/handlers"
 	"github.com/anarudhan/continuum/internal/api/middleware"
 	"github.com/anarudhan/continuum/internal/models"
+	ws "github.com/anarudhan/continuum/internal/websocket"
 )
 
 func main() {
@@ -68,6 +69,11 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(middleware.SecurityHeaders())
+
+	// WebSocket endpoint
+	wsServer := ws.NewServer()
+	go wsServer.Run()
+	router.GET("/ws", wsServer.HandleConnection)
 
 	// Health endpoints (no auth required)
 	router.GET("/health", healthHandler.Health)
