@@ -18,6 +18,9 @@ RUN apk add --no-cache ca-certificates wget
 WORKDIR /app
 COPY --from=builder /build/continuum /app/continuum
 
+# Copy migration files needed at runtime
+COPY --from=builder /build/internal/models/migrations /app/internal/models/migrations
+
 EXPOSE 8080
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \

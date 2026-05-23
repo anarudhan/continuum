@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/anarudhan/continuum/internal/core/memory"
 )
 
@@ -16,15 +15,9 @@ func RegisterMemoryTools(server *Server, memoryService *memory.Service) {
 			return nil, fmt.Errorf("invalid params: %w", err)
 		}
 
-		// Agent ID would come from context/auth in real implementation
-		agentID := uuid.Nil // TODO: Get from auth context
-
-		mem, err := memoryService.Write(nil, agentID, req)
-		if err != nil {
-			return nil, err
-		}
-
-		return mem, nil
+		// Agent ID must come from authenticated MCP session context
+		// TODO: Replace with real auth context when MCP server is wired into main.go
+		return nil, fmt.Errorf("unauthenticated: MCP tools require authenticated agent context")
 	})
 
 	server.RegisterHandler("continuum/memory_search", func(params json.RawMessage) (interface{}, error) {
@@ -37,13 +30,9 @@ func RegisterMemoryTools(server *Server, memoryService *memory.Service) {
 			return nil, fmt.Errorf("invalid params: %w", err)
 		}
 
-		agentID := uuid.Nil // TODO: Get from auth context
-		memories, err := memoryService.Search(nil, agentID, req.Query, "", req.Limit)
-		if err != nil {
-			return nil, err
-		}
-
-		return memories, nil
+		// Agent ID must come from authenticated MCP session context
+		// TODO: Replace with real auth context when MCP server is wired into main.go
+		return nil, fmt.Errorf("unauthenticated: MCP tools require authenticated agent context")
 	})
 
 	server.RegisterHandler("continuum/session_start", func(params json.RawMessage) (interface{}, error) {

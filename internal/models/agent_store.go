@@ -99,7 +99,7 @@ func (s *AgentStore) GetByAPIKeyHash(ctx context.Context, hash string) (*Agent, 
 		FROM agents WHERE api_key_hash = $1 AND is_active = true
 	`, hash).Scan(
 		&agent.ID, &agent.Name, &agent.APIKeyHash, &agent.APIKeyHint,
-		&agent.Scopes, &agent.IsActive, &agent.LastSeenAt, &agent.CreatedAt, &agent.UpdatedAt,
+		&agent.TrustLevel, &agent.Scopes, &agent.IsActive, &agent.LastSeenAt, &agent.CreatedAt, &agent.UpdatedAt,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {

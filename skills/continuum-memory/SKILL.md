@@ -23,7 +23,7 @@ Integration guide for connecting any AI agent to the Continuum memory mesh.
 | Type | Stores | Example |
 |------|--------|---------|
 | **episodic** | Session transcripts, decisions | "Decided OAuth2 + PKCE for auth" |
-| **semantic** | Facts, entities, relationships | "Project: Ezerops, Stack: Go + React" |
+| **semantic** | Facts, entities, relationships | "Project: Anarudhan, Stack: Go + React" |
 | **procedural** | Skills, workflows, patterns | "Deploy: 1) test 2) build 3) push" |
 
 ### Key Operations
@@ -55,9 +55,9 @@ Before starting work, initialize a session:
 When you learn something permanent about the project:
 → continuum.memory_write(
     type="semantic",
-    content="Ezerops uses OAuth2 + PKCE for authentication. Go backend, React frontend.",
+    content="Anarudhan uses OAuth2 + PKCE for authentication. Go backend, React frontend.",
     entities=[
-      {name: "Ezerops", type: "project"},
+      {name: "Anarudhan", type: "project"},
       {name: "OAuth2", type: "technology"},
       {name: "PKCE", type: "technology"}
     ]
@@ -89,7 +89,7 @@ When you establish a repeatable workflow:
       "Git commit to feature branch",
       "Open PR for Kimi audit"
     ],
-    context="Frontend deployment workflow for Ezerops"
+    context="Frontend deployment workflow for Anarudhan"
   )
 ```
 

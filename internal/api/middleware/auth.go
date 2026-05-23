@@ -92,6 +92,21 @@ func hashAPIKey(key string) string {
 	return hex.EncodeToString(h[:])
 }
 
+// RequireAdmin ensures the authenticated agent has admin trust level
+func (a *AuthMiddleware) RequireAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		trustLevel := c.MustGet("agent_trust_level").(string)
+		if trustLevel != "admin" {
+			c.AbortWithStatusJSON(http.StatusForbidden, ErrorResponse{
+				Error:   "insufficient_privilege",
+				Message: "Admin access required",
+			})
+			return
+		}
+		c.Next()
+	}
+}
+
 // ErrorResponse represents an error response
 type ErrorResponse struct {
 	Error   string `json:"error"`

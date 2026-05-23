@@ -158,7 +158,7 @@ continuum wrap --agent codex -- codex agent:start
 
 ## Seamless Agent Workflow Example
 
-### Scenario: Multi-Agent Development on Ezerops
+### Scenario: Multi-Agent Development on Anarudhan
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -186,7 +186,7 @@ continuum wrap --agent codex -- codex agent:start
 ```
 Hermes → continuum.session_start(project="anarudhan", task="auth-flow")
 Hermes → continuum.memory_write(type="semantic",
-  content="Ezerops auth: OAuth2 + PKCE, Go backend, React frontend")
+  content="Anarudhan auth: OAuth2 + PKCE, Go backend, React frontend")
 ```
 
 **Step 2: Claude Code continues**

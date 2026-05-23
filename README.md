@@ -74,4 +74,4 @@ docker compose up -d
 
 ## License
 
-MIT © Ezerops
+MIT © Anarudhan

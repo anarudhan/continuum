@@ -42,3 +42,6 @@ Thumbs.db
 Dockerfile*
 docker-compose*
 .dockerignore
+
+# Keep migrations for Docker builds
+!internal/models/migrations/
