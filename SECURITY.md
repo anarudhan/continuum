@@ -2,7 +2,7 @@
 
 ## Reporting Security Issues
 
-Security issues should be reported to security@ezerops.com.
+Security issues should be reported to pinches-tapioca0v@icloud.com.
 
 Do NOT open public issues for security vulnerabilities.
 

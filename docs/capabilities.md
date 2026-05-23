@@ -124,7 +124,7 @@ curl -X POST http://localhost:8080/api/v1/memories \
   -d '{
     "type": "episodic",
     "content": "Decided to use OAuth2 + PKCE for auth",
-    "metadata": { "agent": "hermes", "project": "ezerops" }
+    "metadata": { "agent": "hermes", "project": "anarudhan" }
   }'
 
 # Search memories
@@ -184,15 +184,15 @@ continuum wrap --agent codex -- codex agent:start
 
 **Step 1: Hermes starts work**
 ```
-Hermes → continuum.session_start(project="ezerops", task="auth-flow")
+Hermes → continuum.session_start(project="anarudhan", task="auth-flow")
 Hermes → continuum.memory_write(type="semantic",
   content="Ezerops auth: OAuth2 + PKCE, Go backend, React frontend")
 ```
 
 **Step 2: Claude Code continues**
 ```
-Claude → continuum.session_start(project="ezerops", task="implement-oauth")
-Claude → continuum.memory_read(query="ezerops auth")
+Claude → continuum.session_start(project="anarudhan", task="implement-oauth")
+Claude → continuum.memory_read(query="anarudhan auth")
 ← Returns: "OAuth2 + PKCE, Go backend, React frontend"
 Claude → continuum.memory_write(type="procedural",
   content="OAuth2 flow: 1) Generate PKCE, 2) Redirect to provider,
@@ -201,7 +201,7 @@ Claude → continuum.memory_write(type="procedural",
 
 **Step 3: Codex reviews PR**
 ```
-Codex → continuum.memory_read(query="ezerops oauth implementation")
+Codex → continuum.memory_read(query="anarudhan oauth implementation")
 ← Returns: Full context including decisions and workflow
 Codex → continuum.memory_write(type="episodic",
   content="PR review: Suggested using httpOnly cookies instead of localStorage")

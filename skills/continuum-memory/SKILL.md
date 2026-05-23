@@ -44,7 +44,7 @@ continuum.session_end     → End session with summary
 Before starting work, initialize a session:
 → continuum.session_start(
     agent="hermes",
-    project="ezerops",
+    project="anarudhan",
     task="implement-auth-flow"
   )
 ```
@@ -81,7 +81,7 @@ When you make a decision during a session:
 When you establish a repeatable workflow:
 → continuum.memory_write(
     type="procedural",
-    name="ezerops-deploy",
+    name="anarudhan-deploy",
     steps=[
       "Run npm run build (zero errors)",
       "Run npm audit (zero vulnerabilities)",
@@ -132,7 +132,7 @@ When finishing work, summarize for future agents:
 Install the Continuum MCP server in your agent:
 ```bash
 # Claude Code
-/plugin marketplace add ezerops/continuum
+/plugin marketplace add anarudhan/continuum
 /plugin install continuum@continuum-memory
 
 # Or manual: add to your agent's MCP config
@@ -159,7 +159,7 @@ curl -X POST $CONTINUUM_URL/api/v1/memories \
   -d '{
     "type": "semantic",
     "content": "Project uses Go 1.24 with Gin framework",
-    "metadata": {"agent": "claude", "project": "ezerops"}
+    "metadata": {"agent": "claude", "project": "anarudhan"}
   }'
 
 # Search

@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/ezerops/continuum/internal/models"
+	"github.com/anarudhan/continuum/internal/models"
 )
 
 // MemoryHandler handles memory-related requests

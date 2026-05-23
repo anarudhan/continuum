@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ezerops/continuum/internal/models"
+	"github.com/anarudhan/continuum/internal/models"
 )
 
 // AgentHandler handles agent-related requests

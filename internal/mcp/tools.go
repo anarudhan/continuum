@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/ezerops/continuum/internal/core/memory"
+	"github.com/anarudhan/continuum/internal/core/memory"
 )
 
 // RegisterMemoryTools registers memory-related MCP tools

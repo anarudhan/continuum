@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ezerops/continuum/internal/models"
+	"github.com/anarudhan/continuum/internal/models"
 )
 
 const (

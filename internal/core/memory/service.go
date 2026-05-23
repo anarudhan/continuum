@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/ezerops/continuum/internal/models"
+	"github.com/anarudhan/continuum/internal/models"
 )
 
 // Service handles memory operations with business logic

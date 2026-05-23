@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/ezerops/continuum/internal/models"
+	"github.com/anarudhan/continuum/internal/models"
 )
 
 // SessionHandler handles session-related requests
@@ -46,6 +46,8 @@ func (h *SessionHandler) Create(c *gin.Context) {
 
 // Get retrieves a session by ID
 func (h *SessionHandler) Get(c *gin.Context) {
+	agentID := c.MustGet("agent_id").(uuid.UUID)
+
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_id", "message": "Invalid session ID"})
@@ -59,6 +61,12 @@ func (h *SessionHandler) Get(c *gin.Context) {
 	}
 
 	if session == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not_found", "message": "Session not found"})
+		return
+	}
+
+	// Verify ownership
+	if session.AgentID != agentID {
 		c.JSON(http.StatusNotFound, gin.H{"error": "not_found", "message": "Session not found"})
 		return
 	}
@@ -96,9 +104,23 @@ type EndSessionRequest struct {
 
 // End marks a session as completed
 func (h *SessionHandler) End(c *gin.Context) {
+	agentID := c.MustGet("agent_id").(uuid.UUID)
+
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_id", "message": "Invalid session ID"})
+		return
+	}
+
+	// Verify ownership before ending
+	session, err := h.sessionStore.GetByID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "fetch_failed", "message": err.Error()})
+		return
+	}
+
+	if session == nil || session.AgentID != agentID {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not_found", "message": "Session not found"})
 		return
 	}
 

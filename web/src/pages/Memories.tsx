@@ -6,9 +6,9 @@ function Memories() {
   const [filterType, setFilterType] = useState('all')
 
   const memories = [
-    { id: '1', type: 'semantic', content: 'OAuth2 + PKCE for auth flow', agent: 'Hermes', project: 'ezerops', visibility: 'shared', createdAt: '2026-05-22T10:30:00Z' },
-    { id: '2', type: 'episodic', content: 'Decided to use httpOnly cookies instead of localStorage', agent: 'Claude Code', project: 'ezerops', visibility: 'shared', createdAt: '2026-05-22T10:15:00Z' },
-    { id: '3', type: 'procedural', content: 'Deploy workflow: 1) npm run build 2) npm audit 3) security scan 4) git commit 5) open PR', agent: 'Codex', project: 'ezerops', visibility: 'shared', createdAt: '2026-05-22T09:00:00Z' },
+    { id: '1', type: 'semantic', content: 'OAuth2 + PKCE for auth flow', agent: 'Hermes', project: 'anarudhan', visibility: 'shared', createdAt: '2026-05-22T10:30:00Z' },
+    { id: '2', type: 'episodic', content: 'Decided to use httpOnly cookies instead of localStorage', agent: 'Claude Code', project: 'anarudhan', visibility: 'shared', createdAt: '2026-05-22T10:15:00Z' },
+    { id: '3', type: 'procedural', content: 'Deploy workflow: 1) npm run build 2) npm audit 3) security scan 4) git commit 5) open PR', agent: 'Codex', project: 'anarudhan', visibility: 'shared', createdAt: '2026-05-22T09:00:00Z' },
     { id: '4', type: 'semantic', content: 'Tech stack: Go 1.24 + Gin + PostgreSQL 16 + React 19', agent: 'Hermes', project: 'continuum', visibility: 'shared', createdAt: '2026-05-21T14:20:00Z' },
   ]
 

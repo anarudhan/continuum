@@ -3,7 +3,7 @@
   "description": "Cross-agent memory mesh for persistent context across AI agents. Store episodic, semantic, and procedural memory. Search and retrieve context from any connected agent.",
   "version": "1.0.0",
   "author": {
-    "name": "ezerops"
+    "name": "anarudhan"
   },
   "license": "MIT",
   "keywords": [

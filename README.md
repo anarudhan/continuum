@@ -23,7 +23,7 @@ You run multiple AI agents: Hermes for frontend, Claude Code for features, Codex
 
 ```bash
 # Clone and start
-git clone https://github.com/ezerops/continuum.git
+git clone https://github.com/anarudhan/continuum.git
 cd continuum
 docker compose up -d
 
