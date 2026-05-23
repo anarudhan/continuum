@@ -2,6 +2,7 @@
 -- PostgreSQL 16+ with pgvector extension
 
 -- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS "vector";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";      -- trigram for fuzzy search
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";     -- hashing
@@ -20,8 +21,8 @@ CREATE TABLE IF NOT EXISTS agents (
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_agents_api_key_hash ON agents(api_key_hash);
-CREATE INDEX idx_agents_active ON agents(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_agents_api_key_hash ON agents(api_key_hash);
+CREATE INDEX IF NOT EXISTS idx_agents_active ON agents(is_active) WHERE is_active = true;
 
 -- Sessions table: agent work sessions
 CREATE TABLE IF NOT EXISTS sessions (
@@ -38,9 +39,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_sessions_agent ON sessions(agent_id);
-CREATE INDEX idx_sessions_status ON sessions(status);
-CREATE INDEX idx_sessions_project ON sessions(project);
+CREATE INDEX IF NOT EXISTS idx_sessions_agent ON sessions(agent_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
+CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project);
 
 -- Memories table: all memory types (episodic, semantic, procedural)
 CREATE TABLE IF NOT EXISTS memories (
@@ -62,23 +63,23 @@ CREATE TABLE IF NOT EXISTS memories (
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_memories_agent ON memories(agent_id);
-CREATE INDEX idx_memories_type ON memories(type);
-CREATE INDEX idx_memories_visibility ON memories(visibility);
-CREATE INDEX idx_memories_project ON memories(project);
-CREATE INDEX idx_memories_created ON memories(created_at DESC);
-CREATE INDEX idx_memories_session ON memories(session_id);
-CREATE INDEX idx_memories_archived ON memories(is_archived) WHERE is_archived = false;
+CREATE INDEX IF NOT EXISTS idx_memories_agent ON memories(agent_id);
+CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type);
+CREATE INDEX IF NOT EXISTS idx_memories_visibility ON memories(visibility);
+CREATE INDEX IF NOT EXISTS idx_memories_project ON memories(project);
+CREATE INDEX IF NOT EXISTS idx_memories_created ON memories(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_memories_session ON memories(session_id);
+CREATE INDEX IF NOT EXISTS idx_memories_archived ON memories(is_archived) WHERE is_archived = false;
 
 -- Full-text search index
-CREATE INDEX idx_memories_fts ON memories USING GIN (to_tsvector('english', content));
+CREATE INDEX IF NOT EXISTS idx_memories_fts ON memories USING GIN (to_tsvector('english', content));
 
 -- Semantic search index (ivfflat for approximate nearest neighbor)
-CREATE INDEX idx_memories_vector ON memories USING ivfflat (content_vector vector_cosine_ops)
+CREATE INDEX IF NOT EXISTS idx_memories_vector ON memories USING ivfflat (content_vector vector_cosine_ops)
     WITH (lists = 100);
 
 -- Trigram index for fuzzy text search
-CREATE INDEX idx_memories_trgm ON memories USING GIN (content gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_memories_trgm ON memories USING GIN (content gin_trgm_ops);
 
 -- Entities table: extracted named entities from semantic memories
 CREATE TABLE IF NOT EXISTS entities (
@@ -96,9 +97,9 @@ CREATE TABLE IF NOT EXISTS entities (
     UNIQUE(name, entity_type, agent_id)
 );
 
-CREATE INDEX idx_entities_name ON entities(name);
-CREATE INDEX idx_entities_type ON entities(entity_type);
-CREATE INDEX idx_entities_agent ON entities(agent_id);
+CREATE INDEX IF NOT EXISTS idx_entities_name ON entities(name);
+CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(entity_type);
+CREATE INDEX IF NOT EXISTS idx_entities_agent ON entities(agent_id);
 
 -- Entity-Memory junction table
 CREATE TABLE IF NOT EXISTS memory_entities (
@@ -109,8 +110,8 @@ CREATE TABLE IF NOT EXISTS memory_entities (
     PRIMARY KEY (memory_id, entity_id)
 );
 
-CREATE INDEX idx_mem_entities_memory ON memory_entities(memory_id);
-CREATE INDEX idx_mem_entities_entity ON memory_entities(entity_id);
+CREATE INDEX IF NOT EXISTS idx_mem_entities_memory ON memory_entities(memory_id);
+CREATE INDEX IF NOT EXISTS idx_mem_entities_entity ON memory_entities(entity_id);
 
 -- Relationships table: graph edges between entities
 CREATE TABLE IF NOT EXISTS relationships (
@@ -126,9 +127,9 @@ CREATE TABLE IF NOT EXISTS relationships (
     UNIQUE(source_id, target_id, relation_type)
 );
 
-CREATE INDEX idx_relations_source ON relationships(source_id);
-CREATE INDEX idx_relations_target ON relationships(target_id);
-CREATE INDEX idx_relations_type ON relationships(relation_type);
+CREATE INDEX IF NOT EXISTS idx_relations_source ON relationships(source_id);
+CREATE INDEX IF NOT EXISTS idx_relations_target ON relationships(target_id);
+CREATE INDEX IF NOT EXISTS idx_relations_type ON relationships(relation_type);
 
 -- Cost logs table: token usage tracking
 CREATE TABLE IF NOT EXISTS cost_logs (
@@ -145,9 +146,9 @@ CREATE TABLE IF NOT EXISTS cost_logs (
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_cost_logs_agent ON cost_logs(agent_id);
-CREATE INDEX idx_cost_logs_session ON cost_logs(session_id);
-CREATE INDEX idx_cost_logs_created ON cost_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cost_logs_agent ON cost_logs(agent_id);
+CREATE INDEX IF NOT EXISTS idx_cost_logs_session ON cost_logs(session_id);
+CREATE INDEX IF NOT EXISTS idx_cost_logs_created ON cost_logs(created_at DESC);
 
 -- Audit log table: immutable security events
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -165,9 +166,9 @@ CREATE TABLE IF NOT EXISTS audit_log (
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_audit_timestamp ON audit_log(timestamp DESC);
-CREATE INDEX idx_audit_agent ON audit_log(agent_id);
-CREATE INDEX idx_audit_type ON audit_log(event_type);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_agent ON audit_log(agent_id);
+CREATE INDEX IF NOT EXISTS idx_audit_type ON audit_log(event_type);
 
 -- Budgets table: per-agent spending limits
 CREATE TABLE IF NOT EXISTS budgets (
@@ -216,17 +217,17 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Triggers for updated_at
-CREATE TRIGGER update_agents_updated_at BEFORE UPDATE ON agents
+CREATE OR REPLACE TRIGGER update_agents_updated_at BEFORE UPDATE ON agents
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_memories_updated_at BEFORE UPDATE ON memories
+CREATE OR REPLACE TRIGGER update_memories_updated_at BEFORE UPDATE ON memories
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_entities_updated_at BEFORE UPDATE ON entities
+CREATE OR REPLACE TRIGGER update_entities_updated_at BEFORE UPDATE ON entities
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_relationships_updated_at BEFORE UPDATE ON relationships
+CREATE OR REPLACE TRIGGER update_relationships_updated_at BEFORE UPDATE ON relationships
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_budgets_updated_at BEFORE UPDATE ON budgets
+CREATE OR REPLACE TRIGGER update_budgets_updated_at BEFORE UPDATE ON budgets
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

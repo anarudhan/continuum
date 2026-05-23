@@ -4,10 +4,17 @@
 -- Enable RLS on sensitive tables
 ALTER TABLE memories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE entities ENABLE TABLE ROW LEVEL SECURITY;
+ALTER TABLE entities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE relationships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cost_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS memory_owner_private ON memories;
+DROP POLICY IF EXISTS memory_shared_read ON memories;
+DROP POLICY IF EXISTS session_owner ON sessions;
+DROP POLICY IF EXISTS cost_owner ON cost_logs;
+DROP POLICY IF EXISTS budget_owner ON budgets;
 
 -- Create policy: agents can only see their own private memories
 CREATE POLICY memory_owner_private ON memories
