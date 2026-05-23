@@ -1,5 +1,5 @@
 # Binaries
-continuum
+/continuum
 *.exe
 *.dll
 *.so

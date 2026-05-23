@@ -46,12 +46,6 @@ jobs:
         env:
           CONTINUUM_DATABASE_URL: postgres://continuum:continuum_test@localhost:5432/continuum?sslmode=disable
           CONTINUUM_REDIS_URL: redis://localhost:6379
-      - run: go tool cover -func=coverage.out
-
-  test-web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
