@@ -1,5 +1,10 @@
 # Continuum Development Guidelines
 
+
+> **Brand:** This document follows the [Continuum Circuit Board Brand System](branding/BRAND_SYSTEM.md).
+> Colors: Deep Navy `#0A1628`, Electric Cyan `#00D4FF`, Soft Lavender `#A78BFA`.
+
+
 Behavioral guidelines for building Continuum, derived from Andrej Karpathy's observations on LLM coding pitfalls, adapted for systems programming and distributed systems.
 
 **Tradeoff:** These guidelines bias toward correctness and simplicity over speed. For trivial tasks (typos, comments), use judgment.

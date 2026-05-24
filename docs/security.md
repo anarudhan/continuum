@@ -1,5 +1,10 @@
 # Continuum Security Model
 
+
+> **Brand:** This document follows the [Continuum Circuit Board Brand System](branding/BRAND_SYSTEM.md).
+> Colors: Deep Navy `#0A1628`, Electric Cyan `#00D4FF`, Soft Lavender `#A78BFA`.
+
+
 > **Design Principle:** Security must be invisible to users. Zero friction. Zero interruptions. Zero "security theater" that gets in the way of agents doing their job.
 
 ## Philosophy

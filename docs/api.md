@@ -1,5 +1,10 @@
 # 🔌 API Reference
 
+
+> **Brand:** This document follows the [Continuum Circuit Board Brand System](branding/BRAND_SYSTEM.md).
+> Colors: Deep Navy `#0A1628`, Electric Cyan `#00D4FF`, Soft Lavender `#A78BFA`.
+
+
 Base URL: `http://localhost:8080/api/v1`
 
 All endpoints require an API key in the `X-API-Key` header except `/health`, `/ready`, and `/live`.

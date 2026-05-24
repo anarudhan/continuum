@@ -1,5 +1,10 @@
 # Using Continuum Guidelines with Cursor
 
+
+> **Brand:** This document follows the [Continuum Circuit Board Brand System](branding/BRAND_SYSTEM.md).
+> Colors: Deep Navy `#0A1628`, Electric Cyan `#00D4FF`, Soft Lavender `#A78BFA`.
+
+
 This repository includes a committed Cursor project rule (`.cursor/rules/continuum-guidelines.mdc`) so the same guidelines apply when you open the project in Cursor.
 
 ## Setup

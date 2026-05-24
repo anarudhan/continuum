@@ -1,5 +1,10 @@
 # Continuum Capabilities
 
+
+> **Brand:** This document follows the [Continuum Circuit Board Brand System](branding/BRAND_SYSTEM.md).
+> Colors: Deep Navy `#0A1628`, Electric Cyan `#00D4FF`, Soft Lavender `#A78BFA`.
+
+
 ## Complete Feature Matrix
 
 ### Core Memory System

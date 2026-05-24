@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <rect width="400" height="80" fill="#0A1628"/>
+  
+  <text x="20" y="52" font-family="'JetBrains Mono', 'SF Mono', monospace" font-size="36" font-weight="700" fill="#FFFFFF" letter-spacing="4">CONTINUUM</text>
+  
+  <rect x="20" y="62" width="360" height="2" fill="#00D4FF" opacity="0.5"/>
+</svg>

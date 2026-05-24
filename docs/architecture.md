@@ -1,5 +1,10 @@
 # Continuum Architecture
 
+
+> **Brand:** This document follows the [Continuum Circuit Board Brand System](branding/BRAND_SYSTEM.md).
+> Colors: Deep Navy `#0A1628`, Electric Cyan `#00D4FF`, Soft Lavender `#A78BFA`.
+
+
 ## Overview
 
 Continuum is a self-hosted cross-agent memory mesh. It provides structured memory persistence, real-time synchronization, and cost tracking across any AI agent that can speak HTTP or MCP.
