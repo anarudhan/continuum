@@ -21,7 +21,7 @@ import (
 
 func main() {
 	// Load configuration
-	databaseURL := getEnv("CONTINUUM_DATABASE_URL", "postgres://continuum:continuum@localhost:5432/continuum?sslmode=disable")
+	databaseURL := getEnv("CONTINUUM_DATABASE_URL", "postgres://continuum:***@localhost:5432/continuum?sslmode=disable")
 	redisURL := getEnv("CONTINUUM_REDIS_URL", "redis://localhost:6379")
 	port := getEnv("CONTINUUM_PORT", "8080")
 
@@ -50,14 +50,16 @@ func main() {
 	agentStore := models.NewAgentStore(store)
 	memoryStore := models.NewMemoryStore(store)
 	sessionStore := models.NewSessionStore(store)
+	costStore := models.NewCostStore(store)
 
 	// Create default agent if none exists
 	ensureDefaultAgent(context.Background(), agentStore)
 
 	// Initialize handlers
-	memoryHandler := handlers.NewMemoryHandler(memoryStore)
+	memoryHandler := handlers.NewMemoryHandler(memoryStore, sessionStore)
 	sessionHandler := handlers.NewSessionHandler(sessionStore)
 	agentHandler := handlers.NewAgentHandler(agentStore)
+	costHandler := handlers.NewCostHandler(costStore)
 	healthHandler := handlers.NewHealthHandler(db, redisClient)
 
 	// Initialize middleware
@@ -70,10 +72,9 @@ func main() {
 	router.Use(gin.Recovery())
 	router.Use(middleware.SecurityHeaders())
 
-	// WebSocket endpoint
+	// WebSocket server
 	wsServer := ws.NewServer()
 	go wsServer.Run()
-	router.GET("/ws", wsServer.HandleConnection)
 
 	// Health endpoints (no auth required)
 	router.GET("/health", healthHandler.Health)
@@ -85,18 +86,26 @@ func main() {
 	v1.Use(authMiddleware.RequireAPIKey())
 	v1.Use(rateLimiter.Limit())
 	{
+		// WebSocket upgrade endpoint (auth required)
+		v1.GET("/ws", wsServer.HandleConnection)
+
 		// Memories
 		v1.POST("/memories", memoryHandler.Create)
 		v1.GET("/memories", memoryHandler.List)
 		v1.GET("/memories/search", memoryHandler.Search)
 		v1.GET("/memories/:id", memoryHandler.Get)
 		v1.DELETE("/memories/:id", memoryHandler.Delete)
+		v1.GET("/memories/session/:session_id", memoryHandler.ListBySession)
 
 		// Sessions
 		v1.POST("/sessions", sessionHandler.Create)
 		v1.GET("/sessions", sessionHandler.List)
 		v1.GET("/sessions/:id", sessionHandler.Get)
 		v1.POST("/sessions/:id/end", sessionHandler.End)
+
+		// Cost tracking
+		v1.GET("/costs", costHandler.GetCosts)
+		v1.GET("/costs/breakdown", costHandler.GetCostBreakdown)
 
 		// Agents (admin-only for full listing)
 		v1.GET("/agents", authMiddleware.RequireAdmin(), agentHandler.List)

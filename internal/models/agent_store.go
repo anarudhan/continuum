@@ -76,11 +76,12 @@ func (s *AgentStore) Create(ctx context.Context, name string) (*Agent, string, e
 func (s *AgentStore) GetByID(ctx context.Context, id uuid.UUID) (*Agent, error) {
 	agent := &Agent{}
 	err := s.store.DB.QueryRow(ctx, `
-		SELECT id, name, api_key_hint, trust_level, scopes, is_active, last_seen_at, created_at, updated_at
+		SELECT id, name, api_key_hint, trust_level, scopes, is_active, last_seen_at, tokens_used, cost_usd, created_at, updated_at
 		FROM agents WHERE id = $1
 	`, id).Scan(
 		&agent.ID, &agent.Name, &agent.APIKeyHint, &agent.TrustLevel,
-		&agent.Scopes, &agent.IsActive, &agent.LastSeenAt, &agent.CreatedAt, &agent.UpdatedAt,
+		&agent.Scopes, &agent.IsActive, &agent.LastSeenAt, &agent.TokensUsed, &agent.CostUSD,
+		&agent.CreatedAt, &agent.UpdatedAt,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -95,11 +96,13 @@ func (s *AgentStore) GetByID(ctx context.Context, id uuid.UUID) (*Agent, error) 
 func (s *AgentStore) GetByAPIKeyHash(ctx context.Context, hash string) (*Agent, error) {
 	agent := &Agent{}
 	err := s.store.DB.QueryRow(ctx, `
-		SELECT id, name, api_key_hash, api_key_hint, trust_level, scopes, is_active, last_seen_at, created_at, updated_at
+		SELECT id, name, api_key_hash, api_key_hint, trust_level, scopes, is_active, last_seen_at, tokens_used, cost_usd, created_at, updated_at
 		FROM agents WHERE api_key_hash = $1 AND is_active = true
 	`, hash).Scan(
 		&agent.ID, &agent.Name, &agent.APIKeyHash, &agent.APIKeyHint,
-		&agent.TrustLevel, &agent.Scopes, &agent.IsActive, &agent.LastSeenAt, &agent.CreatedAt, &agent.UpdatedAt,
+		&agent.TrustLevel, &agent.Scopes, &agent.IsActive, &agent.LastSeenAt,
+		&agent.TokensUsed, &agent.CostUSD,
+		&agent.CreatedAt, &agent.UpdatedAt,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -121,7 +124,7 @@ func (s *AgentStore) UpdateLastSeen(ctx context.Context, id uuid.UUID) error {
 // List lists all agents
 func (s *AgentStore) List(ctx context.Context) ([]Agent, error) {
 	rows, err := s.store.DB.Query(ctx, `
-		SELECT id, name, api_key_hint, trust_level, scopes, is_active, last_seen_at, created_at, updated_at
+		SELECT id, name, api_key_hint, trust_level, scopes, is_active, last_seen_at, tokens_used, cost_usd, created_at, updated_at
 		FROM agents ORDER BY created_at DESC
 	`)
 	if err != nil {
@@ -134,7 +137,8 @@ func (s *AgentStore) List(ctx context.Context) ([]Agent, error) {
 		var agent Agent
 		err := rows.Scan(
 			&agent.ID, &agent.Name, &agent.APIKeyHint, &agent.TrustLevel,
-			&agent.Scopes, &agent.IsActive, &agent.LastSeenAt, &agent.CreatedAt, &agent.UpdatedAt,
+			&agent.Scopes, &agent.IsActive, &agent.LastSeenAt, &agent.TokensUsed, &agent.CostUSD,
+			&agent.CreatedAt, &agent.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan agent: %w", err)
