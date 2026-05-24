@@ -10,14 +10,6 @@ import (
 	"github.com/anarudhan/continuum/internal/models"
 )
 
-// ToolContext holds the authenticated agent context for MCP tool calls
-type ToolContext struct {
-	AgentID    uuid.UUID
-	AgentName  string
-	TrustLevel string
-	Scopes     []string
-}
-
 // RegisterMemoryTools registers memory-related MCP tools with full auth context
 func RegisterMemoryTools(server *Server, memoryService *memory.Service, sessionStore *models.SessionStore) {
 	server.RegisterHandler("continuum/memory_write", func(ctx context.Context, toolCtx *ToolContext, params json.RawMessage) (interface{}, error) {
